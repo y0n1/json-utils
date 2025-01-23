@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,3 +22,6 @@ jobs:
       
       - name: Run tests
         run: deno test --allow-all
+
+      - name: Dry-run publish
+        run: deno publish --dry-run
