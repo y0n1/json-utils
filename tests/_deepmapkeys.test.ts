@@ -62,7 +62,6 @@ Deno.test("should throw when passed undefined", () => {
     );
   } catch (e) {
     const error = e as Error;
-    console.log(error.message);
     assertEquals(error.message, "Invalid argument");
   }
 });
@@ -279,7 +278,6 @@ Deno.test("should skip entries matching the regex list contains an empty string"
   });
 
   assertEquals(result, expected);
-  console.log(result);
 });
 
 Deno.test("should work with the 2nd example from the docs", () => {
