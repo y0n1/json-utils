@@ -12,8 +12,8 @@
       "runtimeExecutable": "deno",
       "runtimeArgs": [
         "test",
+        "--allow-all",
         "--inspect-brk",
-        "--allow-all"
       ],
       "attachSimplePort": 9229,
       "outputCapture": "std"
