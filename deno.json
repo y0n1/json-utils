@@ -1,0 +1,7 @@
+{
+  "name": "@y0n1/deep-map-keys",
+  "version": "1.0.0-rc1",
+  "exports": {
+    "./": "./mod.ts"
+  }
+}
