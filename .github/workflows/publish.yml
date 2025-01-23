@@ -2,9 +2,7 @@ name: Publish
 on:
   push:
     branches:
-      - next
-    paths:
-      - packages/*
+      - main
 
 jobs:
   publish:
@@ -17,24 +15,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: denoland/setup-deno@v1
-        with:
-          deno-version: v1.x
-
-      - uses: tj-actions/changed-files@v44
-        id: changed-files
-        # with:
-        #   files: |
-        #     **
-
-
-      - name: Lint files
-        env:
-          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
-        run: |
-          for file in ${ALL_CHANGED_FILES}; do
-            echo "$file was changed"
-          done
-
-      # - name: Publish package
-      #   run: npx jsr publish
+      - name: Publish package
+        run: npx jsr publish
