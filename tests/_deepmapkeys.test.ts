@@ -133,6 +133,14 @@ Deno.test("should mutate keys in a JSON object", () => {
   assertEquals(result, expected);
 });
 
+Deno.test("should process mixed arrays", () => {
+  const subject = [null, false, true, "some_string", 42];;
+  const expected = [null, false, true, "some_string", 42];;
+  const result = deepMapKeys(subject, camelCase, { debug: true });
+
+  assertEquals(result, expected);
+});
+
 Deno.test("should mutate nested objects keys in JSON arrays", () => {
   const subject: JsonArray = [
     {
