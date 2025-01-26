@@ -1,6 +1,12 @@
 {
   "name": "@y0n1/json-utils",
-  "version": "1.0.0-rc1",
+  "version": "1.0.0-rc2",
   "license": "Apache-2.0",
-  "exports": "./mod.ts"
+  "exports": "./mod.ts",
+  "fmt": {
+    "exclude": [
+      ".vscode",
+      ".github"
+    ]
+  }
 }

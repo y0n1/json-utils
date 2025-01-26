@@ -123,7 +123,7 @@ Deno.test("should skip keys matching a pattern in the skip list", () => {
       /\$\[0\]\.first_key\.second_key\.third_key\['some-very weird:key'\]$/,
       /\$\[0\]\.first_key\.second_key\['2024-07-30T05:13:15\.416Z'\]$/,
     ],
-    debug: true, // Logs the JSONPath of each key when visited 
+    debug: true, // Logs the JSONPath of each key when visited
   });
 
   assertEquals(result, expected);
