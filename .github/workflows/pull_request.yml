@@ -1,27 +1,32 @@
-name: Pull Request Workflow
+name: Pull request
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   check:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
 
-      - name: Lint files
+      - name: Run linter
         run: deno lint
-      
+
+      - name: Run formatter
+        run: deno fmt --check
+
       - name: Run tests
         run: deno test --allow-all
 
-      - name: Dry-run publish
+      - name: Publish (dry-run)
         run: deno publish --dry-run

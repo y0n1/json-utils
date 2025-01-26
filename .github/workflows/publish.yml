@@ -1,4 +1,5 @@
 name: Publish
+
 on:
   push:
     branches:
@@ -17,3 +18,11 @@ jobs:
 
       - name: Publish package
         run: npx jsr publish
+
+      - name: Create tag
+        run: |
+          version="$(jq -r '.version' deno.json)"
+          git config user.name "GitHub Actions"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git tag -a "${version}" -m "Release v${version}"
+          git push origin --tags
