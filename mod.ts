@@ -1,5 +1,5 @@
 /**
- * This module provides a function to recursively mutate the keys of JSON objects within an input value using a provided mutator function.
+ * This module provides a set of functions to process nested JSON data structures.
  * @module
  */
 
@@ -16,15 +16,20 @@ import {
   type VisitorOptions,
 } from "./lib/visitor.ts";
 
+export type {
+  ObjectKeyMutatorFunction,
+  VisitorOptions,
+} from "./lib/visitor.ts";
+
 /**
- * Recursively mutates the keys of JSON objects within the input value using the provided mutator function.
+ * Recursively transforms the keys of JSON objects within the input value using the provided function.
  *
  * @param input - The input value to process. Must be a valid JSON value.
- * @param onVisitJsonObjectKey - A function that mutates the keys of JSON objects.
+ * @param onVisitJsonObjectKey - A function that transforms the keys of JSON objects.
  * @param options - Optional configuration for the JSON visitor.
  * @throws {TypeError} If the input is not a valid JSON value.
  *
- * @returns {JsonValue} The input value with the keys of JSON objects mutated.
+ * @returns {JsonValue} If the input is a JSON scalar, the same value is returned; otherwise a new JSON (reference) value.
  */
 export function deepMapKeys(
   input: unknown,
