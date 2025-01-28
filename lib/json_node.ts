@@ -1,14 +1,14 @@
 import {
-  isJsonArray,
-  isJsonObject,
   type JsonArray,
   type JsonObject,
   type JsonScalar,
   type JsonValue,
+  maybeJsonArray,
+  maybeJsonObject,
 } from "./json.ts";
-import type { Visitor } from "./visitor.ts";
+import type { JsonNodeVisitor } from "./json_node_visitor.ts";
 
-const refs = new WeakSet<JsonObject | JsonArray>();
+const refs = new Set<JsonObject | JsonArray>();
 function detectCircularReference(nodeValue: JsonObject | JsonArray): void {
   if (refs.has(nodeValue)) {
     throw new TypeError("Converting circular structure");
@@ -17,29 +17,88 @@ function detectCircularReference(nodeValue: JsonObject | JsonArray): void {
   }
 }
 
+export type ObjectKeyMutatorFunction = (key: string | number) => string;
+
 /**
- * Represents a node in a tree structure where each node can be a scalar, array, or object.
- *
- * @template T - The type of the value held by the node, which extends JsonValue.
+ * Options for configuring the JSON visitor.
  */
-export class Node<T extends JsonValue> {
+export interface JsonNodeVisitorOptions {
   /**
-   * Escapes a key name by wrapping it in single quotes if it contains a space or a period.
-   *
-   * @param name - The key name to be escaped.
-   * @returns The escaped key name if it contains a space or a period, otherwise the original key name.
+   * A list of regular expression matching the JSONPath (RFC 9535) of a key in the data structure.
+   * Every time a key is found in the data structure, its JSONPath is tested for a match agains the entries in the list.
+   * If at least one match is found, then that key won't be processed by the `JsonNodeVisitorOptions#onVisitJsonObjectKey` callback.
    */
-  static escapeKey(name: string | number): string {
-    if (typeof name === "number") {
-      return `[${name}]`;
+  skipList?: Array<RegExp>;
+
+  /**
+   * An optional flag to enable debug mode.
+   * When set to true, each time a node is visited, its JSONPath will be logged.
+   */
+  debug?: boolean;
+
+  /**
+   * A function that can be used to process the object keys names.
+   * The string returned by this function will be used to replace the name of the object key being visited.
+   */
+  onVisitJsonObjectKey?: ObjectKeyMutatorFunction;
+}
+
+class Visitor implements JsonNodeVisitor {
+  readonly #onVisitObjectKey?: ObjectKeyMutatorFunction;
+  readonly #skipList: Array<RegExp>;
+  readonly #isDebugEnabled: boolean;
+
+  constructor(
+    options?: JsonNodeVisitorOptions,
+  ) {
+    this.#onVisitObjectKey = options?.onVisitJsonObjectKey;
+    this.#skipList = options?.skipList ?? [];
+    this.#isDebugEnabled = options?.debug ?? false;
+  }
+
+  visitScalar(node: JsonNode<JsonScalar>): void {
+    if (this.#isDebugEnabled) {
+      console.log(node.jsonpath);
+    }
+  }
+
+  visitArray(node: JsonNode<JsonArray>): void {
+    if (this.#isDebugEnabled) {
+      console.log(node.jsonpath);
+    }
+
+    node.children?.forEach((child) => child.accept(this));
+  }
+
+  visitObject(node: JsonNode<JsonObject>): void {
+    if (this.#isDebugEnabled) {
+      console.log(node.jsonpath);
+    }
+
+    node.children?.forEach((child) => {
+      const newKey = this.#skipList.some((regex) => regex.test(child.jsonpath))
+        ? child.key
+        : this.#onVisitObjectKey?.(child.key) ?? child.key;
+      child.key = newKey;
+      child.accept(this);
+    });
+  }
+}
+
+/** Represents a node in a tree structure where each node can be a scalar, array, or object. */
+export class JsonNode<T extends JsonValue> {
+  static readonly Visitor = Visitor;
+  static #toJsonPathSegment(value: string | number): string {
+    if (typeof value === "number") {
+      return `[${value}]`;
     }
 
     const regex = /(\s|\.)/;
-    return regex.test(name) ? `['${name}']` : `.${name}`;
+    return regex.test(value) ? `['${value}']` : `.${value}`;
   }
 
-  readonly #parent: Node<JsonValue> | null;
-  readonly #children: Array<Node<JsonValue>> | null;
+  readonly #parent: JsonNode<JsonValue> | null;
+  readonly #children: Array<JsonNode<JsonValue>> | null;
   readonly #kind: "scalar" | "array" | "object";
   readonly #value: T;
   readonly #jsonpath: Array<string>;
@@ -57,7 +116,7 @@ export class Node<T extends JsonValue> {
   constructor(
     key: string | number,
     value: T,
-    parent?: Node<JsonValue>,
+    parent?: JsonNode<T>,
   ) {
     this.key = key;
     this.#value = value;
@@ -72,24 +131,27 @@ export class Node<T extends JsonValue> {
       }
 
       this.#parent = parent;
-      this.#jsonpath.push(...this.#parent.jsonpath, `${Node.escapeKey(key)}`);
+      this.#jsonpath.push(
+        ...this.#parent.jsonpath,
+        `${JsonNode.#toJsonPathSegment(key)}`,
+      );
     }
 
     switch (true) {
-      case isJsonArray(value):
+      case maybeJsonArray(value):
         detectCircularReference(value);
         this.#kind = "array";
         this.#children = value.map((jsonValue, idx) =>
-          new Node(idx, jsonValue, this)
+          new JsonNode(idx, jsonValue, this)
         );
         break;
-      case isJsonObject(value):
+      case maybeJsonObject(value):
         detectCircularReference(value);
         this.#kind = "object";
         this.#children = [];
         for (const [k, jsonValue] of Object.entries(value)) {
           if (typeof jsonValue !== "undefined") {
-            this.#children.push(new Node(k, jsonValue, this));
+            this.#children.push(new JsonNode(k, jsonValue, this));
           }
         }
         break;
@@ -97,6 +159,10 @@ export class Node<T extends JsonValue> {
         this.#kind = "scalar";
         this.#children = null;
         break;
+    }
+
+    if (this.parent === null) {
+      refs.clear();
     }
   }
 
@@ -108,11 +174,11 @@ export class Node<T extends JsonValue> {
     return this.#kind;
   }
 
-  get parent(): Node<JsonValue> | null {
+  get parent(): JsonNode<JsonValue> | null {
     return this.#parent;
   }
 
-  get children(): Array<Node<JsonValue>> | null {
+  get children(): Array<JsonNode<JsonValue>> | null {
     return this.#children;
   }
 
@@ -138,13 +204,13 @@ export class Node<T extends JsonValue> {
   accept(visitor: Visitor) {
     switch (this.#kind) {
       case "scalar":
-        visitor.visitScalar(this as Node<JsonScalar>);
+        visitor.visitScalar(this as JsonNode<JsonScalar>);
         break;
       case "array":
-        visitor.visitArray(this as Node<JsonArray>);
+        visitor.visitArray(this as JsonNode<JsonArray>);
         break;
       case "object":
-        visitor.visitObject(this as Node<JsonObject>);
+        visitor.visitObject(this as JsonNode<JsonObject>);
         break;
     }
   }

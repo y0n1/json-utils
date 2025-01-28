@@ -4,51 +4,45 @@
  */
 
 import {
-  isJsonArray,
-  isJsonObject,
-  isJsonValue,
   type JsonValue,
+  maybeJsonArray,
+  maybeJsonObject,
+  maybeJsonValue,
 } from "./lib/json.ts";
-import { Node } from "./lib/node.ts";
-import {
-  type ObjectKeyMutatorFunction,
-  Visitor,
-  type VisitorOptions,
-} from "./lib/visitor.ts";
-
-export type {
-  ObjectKeyMutatorFunction,
-  VisitorOptions,
-} from "./lib/visitor.ts";
+import { JsonNode, type JsonNodeVisitorOptions } from "./lib/json_node.ts";
 
 /**
  * Recursively transforms the keys of JSON objects within the input value using the provided function.
  *
  * @param input - The input value to process. Must be a valid JSON value.
- * @param onVisitJsonObjectKey - A function that transforms the keys of JSON objects.
- * @param options - Optional configuration for the JSON visitor.
+ * @param functionOrOptions - A function that can be used to change the keys in the provided input or a configuration object.
  * @throws {TypeError} If the input is not a valid JSON value.
  *
- * @returns {JsonValue} If the input is a JSON scalar, the same value is returned; otherwise a new JSON (reference) value.
+ * @returns The same value when the input is a JSON scalar, an empty array or empty object; otherwise a new reference value.
  */
 export function deepMapKeys(
   input: unknown,
-  onVisitJsonObjectKey: ObjectKeyMutatorFunction,
-  options?: VisitorOptions,
+  functionOrOptions:
+    | JsonNodeVisitorOptions
+    | JsonNodeVisitorOptions["onVisitJsonObjectKey"],
 ): JsonValue {
-  if (!isJsonValue(input)) {
+  if (!maybeJsonValue(input)) {
     throw new TypeError("Invalid argument type");
   }
 
   if (
-    isJsonObject(input) && Object.keys(input).length === 0 ||
-    isJsonArray(input) && input.length === 0
+    maybeJsonObject(input) && Object.keys(input).length === 0 ||
+    maybeJsonArray(input) && input.length === 0
   ) {
     return input;
   }
 
-  const visitor = new Visitor(onVisitJsonObjectKey, options);
-  const node = new Node("$", input);
+  const node = new JsonNode("$", input);
+  const visitor = new JsonNode.Visitor(
+    typeof functionOrOptions === "function"
+      ? { onVisitJsonObjectKey: functionOrOptions }
+      : functionOrOptions,
+  );
   node.accept(visitor);
 
   return node.toJsonValue();
