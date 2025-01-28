@@ -17,6 +17,13 @@ import {
 } from "./lib/visitor.ts";
 
 export type {
+  JsonArray,
+  JsonObject,
+  JsonScalar,
+  JsonValue,
+} from "./lib/json.ts";
+
+export type {
   ObjectKeyMutatorFunction,
   VisitorOptions,
 } from "./lib/visitor.ts";

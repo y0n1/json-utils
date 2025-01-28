@@ -8,7 +8,7 @@ import {
 } from "./json.ts";
 import type { Visitor } from "./visitor.ts";
 
-const refs = new WeakSet<JsonObject | JsonArray>();
+const refs = new Set<JsonObject | JsonArray>();
 function detectCircularReference(nodeValue: JsonObject | JsonArray): void {
   if (refs.has(nodeValue)) {
     throw new TypeError("Converting circular structure");
@@ -23,19 +23,13 @@ function detectCircularReference(nodeValue: JsonObject | JsonArray): void {
  * @template T - The type of the value held by the node, which extends JsonValue.
  */
 export class Node<T extends JsonValue> {
-  /**
-   * Escapes a key name by wrapping it in single quotes if it contains a space or a period.
-   *
-   * @param name - The key name to be escaped.
-   * @returns The escaped key name if it contains a space or a period, otherwise the original key name.
-   */
-  static escapeKey(name: string | number): string {
-    if (typeof name === "number") {
-      return `[${name}]`;
+  static #toJsonPathSegment(value: string | number): string {
+    if (typeof value === "number") {
+      return `[${value}]`;
     }
 
     const regex = /(\s|\.)/;
-    return regex.test(name) ? `['${name}']` : `.${name}`;
+    return regex.test(value) ? `['${value}']` : `.${value}`;
   }
 
   readonly #parent: Node<JsonValue> | null;
@@ -57,7 +51,7 @@ export class Node<T extends JsonValue> {
   constructor(
     key: string | number,
     value: T,
-    parent?: Node<JsonValue>,
+    parent?: Node<T>,
   ) {
     this.key = key;
     this.#value = value;
@@ -72,7 +66,10 @@ export class Node<T extends JsonValue> {
       }
 
       this.#parent = parent;
-      this.#jsonpath.push(...this.#parent.jsonpath, `${Node.escapeKey(key)}`);
+      this.#jsonpath.push(
+        ...this.#parent.jsonpath,
+        `${Node.#toJsonPathSegment(key)}`,
+      );
     }
 
     switch (true) {
@@ -97,6 +94,10 @@ export class Node<T extends JsonValue> {
         this.#kind = "scalar";
         this.#children = null;
         break;
+    }
+
+    if (this.parent === null) {
+      refs.clear();
     }
   }
 

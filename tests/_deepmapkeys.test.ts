@@ -42,7 +42,7 @@ Deno.test("Usage example", () => {
   assertEquals(result, expected);
 });
 
-Deno.test("should throw if the passed value is not a JSON value", () => {
+Deno.test("Throws if the passed value is not a JSON value", () => {
   try {
     assertThrows(
       () => deepMapKeys(new Set(), camelCase, { debug: true }),
@@ -54,7 +54,7 @@ Deno.test("should throw if the passed value is not a JSON value", () => {
   }
 });
 
-Deno.test("should throw when passed undefined", () => {
+Deno.test("Throws when passed undefined", () => {
   try {
     assertThrows(
       () => deepMapKeys(undefined, camelCase, { debug: true }),
@@ -66,7 +66,7 @@ Deno.test("should throw when passed undefined", () => {
   }
 });
 
-Deno.test("should throw if there is a circular reference", () => {
+Deno.test("Throws if there is a circular reference", () => {
   const a: JsonObject = { prop: {} };
   a.prop = a;
 
@@ -78,7 +78,7 @@ Deno.test("should throw if there is a circular reference", () => {
   }
 });
 
-Deno.test("should discard keys with undefined values", () => {
+Deno.test("Discards keys with undefined values", () => {
   const subject: JsonObject = { prop: undefined };
   const expected: JsonObject = {};
 
@@ -87,7 +87,7 @@ Deno.test("should discard keys with undefined values", () => {
   assertEquals(result, expected);
 });
 
-Deno.test("should return the same object when an empty object is passed", () => {
+Deno.test("Returns the same object when an empty object is passed", () => {
   const subject: JsonObject = {};
 
   const result = deepMapKeys(subject, camelCase, { debug: true });
@@ -95,7 +95,7 @@ Deno.test("should return the same object when an empty object is passed", () => 
   assert(result === subject);
 });
 
-Deno.test("should return the same array when an empty array is passed", () => {
+Deno.test("Returns the same array when an empty array is passed", () => {
   const subject: JsonArray = [];
 
   const result = deepMapKeys(subject, camelCase, { debug: true });
@@ -103,7 +103,7 @@ Deno.test("should return the same array when an empty array is passed", () => {
   assert(result === subject);
 });
 
-Deno.test("should return the same value when a JSON scalar is passed", () => {
+Deno.test("Returns the same value when a JSON scalar is passed", () => {
   const scalars = [null, false, true, "some_string", 42];
 
   scalars.forEach((v, idx) => {
@@ -112,7 +112,7 @@ Deno.test("should return the same value when a JSON scalar is passed", () => {
   });
 });
 
-Deno.test("should mutate keys in a JSON object", () => {
+Deno.test("Transforms keys in a JSON object", () => {
   const subject: JsonObject = {
     address: {
       street_name: "Main St",
@@ -133,15 +133,7 @@ Deno.test("should mutate keys in a JSON object", () => {
   assertEquals(result, expected);
 });
 
-Deno.test("should process mixed arrays", () => {
-  const subject = [null, false, true, "some_string", 42];
-  const expected = [null, false, true, "some_string", 42];
-  const result = deepMapKeys(subject, camelCase, { debug: true });
-
-  assertEquals(result, expected);
-});
-
-Deno.test("should mutate nested objects keys in JSON arrays", () => {
+Deno.test("Processes nested objects keys in JSON arrays", () => {
   const subject: JsonArray = [
     {
       item_name: "Apple",
@@ -183,7 +175,7 @@ Deno.test("should mutate nested objects keys in JSON arrays", () => {
   assertEquals(result, expected);
 });
 
-Deno.test("should skip keys matching a pattern in the skip list for JSON objects", () => {
+Deno.test("Skips keys matching a pattern in the skip list for JSON objects", () => {
   const KEY1 = "some-very weird:key";
   const KEY2 = "2024-07-30T05:13:15.416Z";
 
@@ -219,7 +211,7 @@ Deno.test("should skip keys matching a pattern in the skip list for JSON objects
   assertEquals(result, expected);
 });
 
-Deno.test("should skip keys matching a pattern in the skip list for JSON arrays", () => {
+Deno.test("Skips keys matching a pattern in the skip list for JSON arrays", () => {
   const KEY1 = "some-very weird:key";
   const KEY2 = "2024-07-30T05:13:15.416Z";
 
@@ -255,7 +247,7 @@ Deno.test("should skip keys matching a pattern in the skip list for JSON arrays"
   assertEquals(result, expected);
 });
 
-Deno.test("should skip entries matching the regex list contains an empty string", () => {
+Deno.test("Skips entries matching the regex list contains an empty string", () => {
   const KEY1 = "some-very weird:key";
   const KEY2 = "2024-07-30T05:13:15.416Z";
 
@@ -288,7 +280,7 @@ Deno.test("should skip entries matching the regex list contains an empty string"
   assertEquals(result, expected);
 });
 
-Deno.test("should work with the 2nd example from the docs", () => {
+Deno.test("Skips keys that appear as Date's ISO string", () => {
   const subject: JsonArray = [{
     dates_data: {
       "2024-07-30T05:00:00.000Z": { item_value: 42 },
@@ -304,6 +296,27 @@ Deno.test("should work with the 2nd example from the docs", () => {
     skipList: [/\['\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z'\]$/], // Date ISO string
     debug: true,
   });
+
+  assertEquals(result, expected);
+});
+
+Deno.test("Disposes known references", () => {
+  const subject = {
+    full_name: "John Smith",
+    address: {
+      street_name: "43th Main Road St",
+    },
+  };
+
+  const expected = {
+    fullName: "John Smith",
+    address: {
+      streetName: "43th Main Road St",
+    },
+  };
+
+  deepMapKeys(subject, camelCase);
+  const result = deepMapKeys(subject, camelCase);
 
   assertEquals(result, expected);
 });
