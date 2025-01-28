@@ -25,7 +25,7 @@ export type ObjectKeyMutatorFunction = (key: string | number) => string;
 export interface JsonNodeVisitorOptions {
   /**
    * A list of regular expression matching the JSONPath (RFC 9535) of a key in the data structure.
-   * Every time a key is found in the data structure, its JSONPath is tested for a match agains the entries in the list.
+   * Every time a key is found in the data structure, its JSONPath is tested for a match against the entries in the list.
    * If at least one match is found, then that key won't be processed by the `JsonNodeVisitorOptions#onVisitJsonObjectKey` callback.
    */
   skipList?: Array<RegExp>;
