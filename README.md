@@ -89,7 +89,7 @@ in the data structure by using regular expressions that match against the
 [JSONPath](https://datatracker.ietf.org/doc/html/rfc9535#name-status-of-this-memo)
 of those object keys.
 
-Here is an example from the test explaining how to do it:
+Here is an example from the tests explaining how leverage this feature:
 
 ```typescript
 Deno.test("should skip keys matching a pattern in the skip list", () => {
