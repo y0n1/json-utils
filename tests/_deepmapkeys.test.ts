@@ -37,7 +37,10 @@ Deno.test("Usage example", () => {
     },
   ];
 
-  const result = deepMapKeys(subject, camelCase, { debug: true });
+  const result = deepMapKeys(subject, {
+    onVisitJsonObjectKey: camelCase,
+    debug: true,
+  });
 
   assertEquals(result, expected);
 });
@@ -45,7 +48,11 @@ Deno.test("Usage example", () => {
 Deno.test("Throws if the passed value is not a JSON value", () => {
   try {
     assertThrows(
-      () => deepMapKeys(new Set(), camelCase, { debug: true }),
+      () =>
+        deepMapKeys(new Set(), {
+          onVisitJsonObjectKey: camelCase,
+          debug: true,
+        }),
       TypeError,
     );
   } catch (e) {
@@ -57,7 +64,11 @@ Deno.test("Throws if the passed value is not a JSON value", () => {
 Deno.test("Throws when passed undefined", () => {
   try {
     assertThrows(
-      () => deepMapKeys(undefined, camelCase, { debug: true }),
+      () =>
+        deepMapKeys(undefined, {
+          onVisitJsonObjectKey: camelCase,
+          debug: true,
+        }),
       TypeError,
     );
   } catch (e) {
@@ -71,7 +82,10 @@ Deno.test("Throws if there is a circular reference", () => {
   a.prop = a;
 
   try {
-    assertThrows(() => deepMapKeys(a, camelCase, { debug: true }), TypeError);
+    assertThrows(
+      () => deepMapKeys(a, { onVisitJsonObjectKey: camelCase, debug: true }),
+      TypeError,
+    );
   } catch (e) {
     const error = e as Error;
     assert(error.message, "Converting circular structure");
@@ -82,7 +96,10 @@ Deno.test("Discards keys with undefined values", () => {
   const subject: JsonObject = { prop: undefined };
   const expected: JsonObject = {};
 
-  const result = deepMapKeys(subject, camelCase, { debug: true });
+  const result = deepMapKeys(subject, {
+    onVisitJsonObjectKey: camelCase,
+    debug: true,
+  });
 
   assertEquals(result, expected);
 });
@@ -90,7 +107,10 @@ Deno.test("Discards keys with undefined values", () => {
 Deno.test("Returns the same object when an empty object is passed", () => {
   const subject: JsonObject = {};
 
-  const result = deepMapKeys(subject, camelCase, { debug: true });
+  const result = deepMapKeys(subject, {
+    onVisitJsonObjectKey: camelCase,
+    debug: true,
+  });
 
   assert(result === subject);
 });
@@ -98,7 +118,10 @@ Deno.test("Returns the same object when an empty object is passed", () => {
 Deno.test("Returns the same array when an empty array is passed", () => {
   const subject: JsonArray = [];
 
-  const result = deepMapKeys(subject, camelCase, { debug: true });
+  const result = deepMapKeys(subject, {
+    onVisitJsonObjectKey: camelCase,
+    debug: true,
+  });
 
   assert(result === subject);
 });
@@ -107,7 +130,7 @@ Deno.test("Returns the same value when a JSON scalar is passed", () => {
   const scalars = [null, false, true, "some_string", 42];
 
   scalars.forEach((v, idx) => {
-    deepMapKeys(v, camelCase, { debug: true });
+    deepMapKeys(v, { onVisitJsonObjectKey: camelCase, debug: true });
     assertEquals(scalars[idx], v);
   });
 });
@@ -128,7 +151,10 @@ Deno.test("Transforms keys in a JSON object", () => {
     lastName: "Doe",
   };
 
-  const result = deepMapKeys(subject, camelCase, { debug: true });
+  const result = deepMapKeys(subject, {
+    onVisitJsonObjectKey: camelCase,
+    debug: true,
+  });
 
   assertEquals(result, expected);
 });
@@ -170,7 +196,10 @@ Deno.test("Processes nested objects keys in JSON arrays", () => {
     "foo_bar",
   ];
 
-  const result = deepMapKeys(subject, camelCase, { debug: true });
+  const result = deepMapKeys(subject, {
+    onVisitJsonObjectKey: camelCase,
+    debug: true,
+  });
 
   assertEquals(result, expected);
 });
@@ -200,7 +229,8 @@ Deno.test("Skips keys matching a pattern in the skip list for JSON objects", () 
     },
   };
 
-  const result = deepMapKeys(subject, camelCase, {
+  const result = deepMapKeys(subject, {
+    onVisitJsonObjectKey: camelCase,
     skipList: [
       /\$\.first_key\.second_key\.third_key\['some-very weird:key'\]$/,
       /\$\.first_key\.second_key\['2024-07-30T05:13:15\.416Z'\]$/,
@@ -236,7 +266,8 @@ Deno.test("Skips keys matching a pattern in the skip list for JSON arrays", () =
     },
   }];
 
-  const result = deepMapKeys(subject, camelCase, {
+  const result = deepMapKeys(subject, {
+    onVisitJsonObjectKey: camelCase,
     skipList: [
       /\$\[0\]\.first_key\.second_key\.third_key\['some-very weird:key'\]$/,
       /\$\[0\]\.first_key\.second_key\['2024-07-30T05:13:15\.416Z'\]$/,
@@ -272,7 +303,8 @@ Deno.test("Skips entries matching the regex list contains an empty string", () =
     },
   }];
 
-  const result = deepMapKeys(subject, camelCase, {
+  const result = deepMapKeys(subject, {
+    onVisitJsonObjectKey: camelCase,
     skipList: [/''/],
     debug: true,
   });
@@ -292,7 +324,8 @@ Deno.test("Skips keys that appear as Date's ISO string", () => {
     },
   }];
 
-  const result = deepMapKeys(subject, camelCase, {
+  const result = deepMapKeys(subject, {
+    onVisitJsonObjectKey: camelCase,
     skipList: [/\['\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z'\]$/], // Date ISO string
     debug: true,
   });
